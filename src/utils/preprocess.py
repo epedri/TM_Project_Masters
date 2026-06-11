@@ -76,7 +76,7 @@ def split_hashtags(series: pd.Series) -> pd.Series:
         word = tag.lstrip("#")
         if not word:
             return ""
-        if re.fullmatch(r"[A-Z0-9]+", word):
+        if re.fullmatch(r"[A-Z]+", word):
             return word
             
         # numbers or lowercase followed by uppercase
