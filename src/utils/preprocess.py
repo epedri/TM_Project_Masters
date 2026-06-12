@@ -54,7 +54,7 @@ def replace_punctuations(series:pd.Series)->pd.Series:
         
         text = re.sub(r'(\d)\s*-\s*(\d)', r'\1 to \2', text) #if "-" between 2 numbers change it to "to", but remove this if causing problems
         
-        text = re.sub(r'-(?=\d)', 'minus', text) #regex to convert a hyphen to a minus sign token if followed by a number
+        text = re.sub(r'\s-(?=\d)', ' minus ', text) #regex to convert a hyphen to a minus sign token if followed by a number
 
         text = re.sub(r"'s", " ", text)
 
@@ -102,7 +102,8 @@ def replace_emojis(series:pd.Series)->pd.Series:
 def remove_stopwords(token_series: pd.Series, 
                      stopwords_list: Iterable[str]=STOPWORDS) -> pd.Series:      
     return token_series.apply(lambda tokens: [word for word in tokens 
-                                              if word not in set(stopwords_list)])
+                                              if (word not in set(stopwords_list)) and 
+                                              (not(len(word)==1) or word.isdigit())])
 
 
 def lemmatize_series(series, tagger=pos_tag, lemmatizer=_wordnet_lem):
