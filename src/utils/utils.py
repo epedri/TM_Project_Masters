@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def visualize_dimensionality_reduction(transformation, targets, title=None):
+def visualize_dimensionality_reduction(transformation, targets, title=None, save_to=None):
     r"""
     Creates a scatter visualisation for
     passed transformation.
@@ -24,7 +24,7 @@ def visualize_dimensionality_reduction(transformation, targets, title=None):
     cmap = plt.cm.tab20b # noqa
 
     # create a scatter plot of the transformation output
-    plt.scatter(transformation[:, 0], transformation[:, 1],
+    fig = plt.scatter(transformation[:, 0], transformation[:, 1],
                 c=np.array(targets).astype(int), cmap=cmap) 
 
     # save unique labels
@@ -40,4 +40,6 @@ def visualize_dimensionality_reduction(transformation, targets, title=None):
     plt.axis('off') 
     if title:
         plt.title(title)
+    if save_to:
+        plt.savefig(save_to)
     plt.show()
