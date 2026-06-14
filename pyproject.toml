@@ -1,0 +1,93 @@
+[project]
+name = "tm-project-masters"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "accelerate>=1.14.0",
+    "contractions>=0.1.73",
+    "datasets>=5.0.0",
+    "deep-translator>=1.11.4",
+    "emoji>=2.15.0",
+    "gensim",
+    "ipykernel>=7.3.0",
+    "ipywidgets>=8.1.8",
+    "lingua-language-detector>=2.2.0",
+    "matplotlib>=3.10.9",
+    "nltk>=3.9.4",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "polars>=1.41.2",
+    "protobuf>=7.35.1",
+    "scikit-learn>=1.9.0",
+    "seaborn>=0.13.2",
+    "sentencepiece>=0.2.1",
+    "transformers>=5.11.0",
+    "umap-learn>=0.5.12",
+    "wordcloud>=1.9.6",
+]
+
+[project.optional-dependencies]
+amd = [
+    "rocm>=7.14.0a20260611",
+    "rocm-sdk-core>=7.14.0a20260611",
+    "rocm-sdk-libraries-gfx110x-all>=7.14.0a20260611",
+    "torch<=2.13.0",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.15.16"]
+
+[tool.uv.sources]
+torch = [{ index = "torch-amd", extra = "amd" }]
+rocm-sdk-core = [{ index = "torch-amd", extra = "amd" }]
+rocm-sdk-libraries-gfx110x-all = [{ index = "torch-amd", extra = "amd" }]
+rocm = [{ index = "torch-amd", extra = "amd" }]
+gensim = { git = "https://github.com/piskvorky/gensim" }
+
+[[tool.uv.index]]
+name = "torch-amd"
+url = "https://rocm.nightlies.amd.com/v2-staging/gfx110X-all"
+explicit = true
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "CPY",
+    "FIX",
+    "COM812",
+    "D100",
+    "D104",
+    "E501",
+    'ERA001',
+    "S101",
+    "TD003",
+    "TD004",
+    "TRY003",
+    "T201",
+    "W505",
+    "PTH",
+    "EM101",
+    "PLR0913",
+    "PLR2004",
+    "TD002",
+]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 80
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"

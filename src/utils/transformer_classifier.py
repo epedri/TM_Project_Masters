@@ -1,13 +1,9 @@
 import json
 import os
-import tqdm
-
-from transformers import logging
-logging.set_verbosity_error()   # only errors
-
 from typing import TYPE_CHECKING, TypedDict, cast
 
 import torch
+import tqdm
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -20,6 +16,7 @@ from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
     BatchEncoding,
+    logging,
 )
 
 if TYPE_CHECKING:
@@ -28,13 +25,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedModel, TokenizersBackend
     from transformers.modeling_outputs import SequenceClassifierOutput
 
-MAX_LEN = 64
-BATCH_SIZE = 32
-EPOCHS = 5
-LR = 2e-5
-NUM_LABELS = 3
-
-MODEL_NAMES = ["bert-base-uncased", "distilbert-base-uncased"]
+logging.set_verbosity_error()  # only errors
 
 
 class EvaluationMetricResult(TypedDict):
@@ -133,9 +124,11 @@ class DataDataset(Dataset[dict[str, torch.Tensor]]):
         self.labels = torch.tensor(labels.values, dtype=torch.long)
 
     def __len__(self) -> int:
+        """Get the number of samples in the dataset."""
         return len(self.labels)
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
+        """Get a single sample from the dataset at the specified index."""
         item: dict[str, torch.Tensor] = {
             k: v[idx] for k, v in self.encodings.items()
         }
@@ -193,12 +186,11 @@ def _evaluate_model(
                 labels=[0, 1, 2],
                 target_names=["Bearish", "Bullish", "Neutral"],
                 digits=4,
-                output_dict=True,
                 zero_division=0,
             ),
         ),
         "confusion_matrix": confusion_matrix(
-            y_true, y_pred, labels=[0, 1, 2]
+            y_true, y_pred, labels=[0, 1, 2], normalize="true"
         ).tolist(),
     }
 
@@ -206,13 +198,13 @@ def _evaluate_model(
 def train_model(
     train_df: pd.DataFrame,
     val_df: pd.DataFrame,
-    model_name: str=MODEL_NAMES[0],
-    num_labels: int=NUM_LABELS,
-    device: torch.device="cuda",
-    epochs: int=EPOCHS,
-    batch_size: int=BATCH_SIZE,
-    lr: float=LR,
-    max_length: int=MAX_LEN,
+    model_name: str,
+    num_labels: int,
+    device: torch.device,
+    epochs: int,
+    batch_size: int,
+    lr: float,
+    max_length: int,
 ) -> ModelTrainingResult:
     """Train a transformer-based model for sequence classification.
 
@@ -308,8 +300,8 @@ def train_model(
         print(
             f"{model_name} | epoch {epoch + 1}/{epochs} | train_loss={avg_train_loss:.4f} | val_weighted_f1={validation_metrics['weighted_f1']:.4f} | val_macro_f1={validation_metrics['macro_f1']:.4f}"
         )
-        if validation_metrics["weighted_f1"] > best_f1:
-            best_f1 = validation_metrics["weighted_f1"]
+        if validation_metrics["macro_f1"] > best_f1:
+            best_f1 = validation_metrics["macro_f1"]
             best_state = {
                 k: v.detach().cpu().clone()
                 for k, v in model.state_dict().items()
@@ -318,7 +310,7 @@ def train_model(
         model.load_state_dict(best_state)
     final_val = _evaluate_model(model, val_loader, device)
 
-    save_dir = f"src/data/transformer_outputs_{model_name}"
+    save_dir = f"results/transformer_outputs_{model_name}"
     os.makedirs(save_dir, exist_ok=True)
     model.save_pretrained(save_dir)
     with open(f"{save_dir}/results.json", "w") as f:
@@ -337,9 +329,9 @@ def train_model(
 def predict(
     sentences: list[str],
     model: PreTrainedModel,
-    tokenizer: TokenizersBackend=AutoTokenizer.from_pretrained(MODEL_NAMES[0]),
-    max_length: int=MAX_LEN,
-    device: torch.device="cuda",
+    tokenizer: TokenizersBackend,
+    max_length: int,
+    device: torch.device,
 ) -> list[int]:
     """Predict the labels for a list of input texts using a trained transformer model.
 
