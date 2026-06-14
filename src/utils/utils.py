@@ -2,7 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def visualize_dimensionality_reduction(transformation, targets, title=None, save_to=None):
+def visualize_dimensionality_reduction(
+                                       transformation, 
+                                       targets:list, 
+                                       title:str|None=None, 
+                                       save_to:str|None=None
+                                       ) -> None:
     r"""
     Creates a scatter visualisation for
     passed transformation.
@@ -19,12 +24,18 @@ def visualize_dimensionality_reduction(transformation, targets, title=None, save
 
     targets: list
         A labels list.
+
+    title: str, optional
+        A title to add on vizualization.
+
+    save_to: str, optional
+        A path to location where vizualization should be stored
     """
     # defuine colormap
     cmap = plt.cm.tab20b # noqa
 
     # create a scatter plot of the transformation output
-    fig = plt.scatter(transformation[:, 0], transformation[:, 1],
+    plt.scatter(transformation[:, 0], transformation[:, 1],
                 c=np.array(targets).astype(int), cmap=cmap) 
 
     # save unique labels
@@ -38,8 +49,13 @@ def visualize_dimensionality_reduction(transformation, targets, title=None, save
     handles = [plt.scatter([], [], c=rgba, label=label) for rgba, label in zip(rgba_values, labels)]
     plt.legend(handles=handles, title='Classes')
     plt.axis('off') 
+
+    # add title
     if title:
         plt.title(title)
+
+    # save image
     if save_to:
         plt.savefig(save_to)
+        
     plt.show()

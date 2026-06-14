@@ -4,7 +4,6 @@ import contractions
 
 import pandas as pd
 
-from transformers import AutoTokenizer
 from typing import Iterable
 
 from nltk.stem import WordNetLemmatizer
@@ -16,34 +15,109 @@ _wordnet_lem = WordNetLemmatizer()
 
 
 def replace_urls(series: pd.Series,
-                 d:str="URL") -> pd.Series:
+                 replace_with:str="URL") -> pd.Series:
+    """
+    Returns a series with all links replaced in original Pandas Series to `replace_with`.
+
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    replace_with: str, default="URL"
+        A string that will replace all links in Series.
+
+    Returns
+    -------
+    pandas.Series
+        A Series with altered values.
+    """
     return series.str.replace(
         r"(?i)(https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,63}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&/=]*))",
-        d,
+        replace_with,
         regex=True,
     )
 
 
 def replace_mentions(series:pd.Series,
-                     d:str="REF") -> pd.Series:
+                     replace_with:str="REF") -> pd.Series:
+    """
+    Returns a series with all references (i.e. '@numpy') replaced in original Pandas Series to `replace_with`.
+
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    replace_with: str, default="REF"
+        A string that will replace all references in Series.
+
+    Returns
+    -------
+    pandas.Series
+        A Series with altered values.
+    """
     return series.str.replace(
         r'@\w+', 
-        d, 
+        replace_with, 
         regex=True
         )
 
 
 def stock_mentions(series:pd.Series,
-                     d:str="STOCK") -> pd.Series:
+                   replace_with:str="STOCK") -> pd.Series:
+    """
+    Returns a series with all stock mentions (e.g. '$NVDA') replaced in original Pandas Series to `replace_with`.
+
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    replace_with: str, default="STOCK"
+        A string that will replace all stock mentions in Series.
+
+    Returns
+    -------
+    pandas.Series
+        A Series with altered values.
+    """
     return series.str.replace(
         r'\$[A-Za-z]+', 
-        d, 
+        replace_with, 
         regex=True
         )
 
 
 def replace_punctuations(series:pd.Series)->pd.Series:
+    """
+    Returns a series without punctuation.
+
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    Returns
+    -------
+    pandas.Series
+        A Series with altered values.
+    """
+
     def _replace_punctuations_unit(text):
+        """
+        Returns a str without punctuation.
+
+        Parameters
+        ----------
+        text: str or None
+            Text to be cleaned.
+
+        Returns
+        -------
+        str
+            Altered text.
+        """
         text = str(text)
 
         text = contractions.fix(text) #fixes apostophres, like You're into You are
@@ -56,9 +130,9 @@ def replace_punctuations(series:pd.Series)->pd.Series:
         
         text = re.sub(r'\s-(?=\d)', ' minus ', text) #regex to convert a hyphen to a minus sign token if followed by a number
 
-        text = re.sub(r"'s", " ", text)
+        text = re.sub(r"'s", " ", text) #getting rid of possessive nouns
 
-        text = re.sub(r"[_ƒº½]", " ", text)
+        text = re.sub(r"[_ƒº½]", " ", text) #getting rid of unhandled characters
         
         text = re.sub(r'%', ' percent', text) #regex for % to appear as percent
 
@@ -71,11 +145,43 @@ def replace_punctuations(series:pd.Series)->pd.Series:
 
 
 def split_hashtags(series: pd.Series) -> pd.Series:
+    """
+    Returns a series with hashtags splitted. 
+    
+    (e.g. '#ILovePython' -> 'I Love Python')
 
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    Returns
+    -------
+    pandas.Series
+        A Series with altered values.
+    """
     def _split_tag(tag: str) -> str:
+        """
+        Returns a tag with hashtags splitted.
+
+        Works only with string that are fully a hashtag.
+        (e.g. '#ILovePython' -> 'I Love Python')
+
+        Parameters
+        ----------
+        tag: str
+            The text to be cleaned.
+
+        Returns
+        -------
+        str
+            A text with altered values.
+        """
+        # get rid of hashtag
         word = tag.lstrip("#")
         if not word:
             return ""
+        # if word is all upper case return
         if re.fullmatch(r"[A-Z]+", word):
             return word
             
@@ -88,6 +194,21 @@ def split_hashtags(series: pd.Series) -> pd.Series:
         return tokens
 
     def _process_text(text):
+        """
+        Returns a tag with hashtags splitted.
+
+        Finds hashtag pattern and chages it (e.g. '#ILovePython' -> 'I Love Python').
+
+        Parameters
+        ----------
+        text: str
+            The text to be cleaned.
+
+        Returns
+        -------
+        str
+            A text with altered values.
+        """
         if not isinstance(text, str):
             return text
         return re.sub(r"#\w+", lambda m: _split_tag(m.group()), text)
@@ -96,18 +217,84 @@ def split_hashtags(series: pd.Series) -> pd.Series:
 
 
 def replace_emojis(series:pd.Series)->pd.Series:
+    """
+    Returns a series without emojis.
+
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    Returns
+    -------
+    pandas.Series
+        A series with altered values.
+    """
     return series.apply(lambda text:emoji.demojize(text, delimiters=(" ", " ")))
 
 
 def remove_stopwords(token_series: pd.Series, 
-                     stopwords_list: Iterable[str]=STOPWORDS) -> pd.Series:      
-    return token_series.apply(lambda tokens: [word for word in tokens 
-                                              if (word not in set(stopwords_list)) and 
-                                              (not(len(word)==1) or word.isdigit())])
+                     stopwords_list: Iterable[str]=STOPWORDS) -> pd.Series:  
+    """
+    Returns a series without stopwords.
+
+    Iterates over series of lists of tokens and eliminated provided stopwords.
+
+    Parameters
+    ----------
+    token_series: pandas.Series
+        The series to be cleaned.
+    stopwords_list: Iterable[str], default=list(nltk.corpus.stopwords.words("English"))
+        Stopwords to remove. Dafault value is english stopwords provided by nltk.
+    
+    Returns
+    -------
+    pandas.Series
+        A series with altered values.
+    """
+    return token_series.apply(lambda tokens: [word for word in tokens  # each word
+                                              if (word not in set(stopwords_list)) and  # that is not in stopwords
+                                              (not(len(word)==1) or word.isdigit())]) # and loger than one, unless it's a digit
 
 
-def lemmatize_series(series, tagger=pos_tag, lemmatizer=_wordnet_lem):
+def lemmatize_series(series:pd.Series, 
+                     tagger=pos_tag, 
+                     lemmatizer=_wordnet_lem)->pd.Series:
+    """
+    Returns a series with lemmatized tokens.
+
+    Iterates over series of lists of tokens and lemmatizes them.
+
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    tagger: default=nltk.tag.pos_tag
+        POS Tagger to improve lemmetizing.
+
+    lemmatizer: default=nltk.stem.WordNetLemmatizer
+        A model to perform lemmatization
+    
+    Returns
+    -------
+    pandas.Series
+        A series with altered values.
+    """
     def _get_wordnet_pos(tag):
+        """
+        Changes from nltk.tag format to Wordnet POS tag format.
+
+        Parameters
+        ----------
+        tag: str
+            A POS tag.
+        
+        Returns
+        -------
+        str
+            Modified POS tag 
+        """
         if tag.startswith('J'):
             return 'a'
         elif tag.startswith('V'):
@@ -120,6 +307,19 @@ def lemmatize_series(series, tagger=pos_tag, lemmatizer=_wordnet_lem):
             return 's'
     
     def _pos_tag_series(series):
+        """
+        Gets POS tags for every list of tokens in series.
+
+        Parameters
+        ----------
+        series: pandas.Series
+            Series to be POS tagged.
+        
+        Returns
+        -------
+        pandas.Series
+            Modified Series. 
+        """
         return series.apply(lambda lt: tagger(lt))
 
     intermediate_sries = _pos_tag_series(series)
@@ -127,6 +327,20 @@ def lemmatize_series(series, tagger=pos_tag, lemmatizer=_wordnet_lem):
 
 
 def text_cleaner(series: pd.Series)->pd.Series:
+    """
+    Returns a series with fully cleaned text.
+
+    Replaces emojis, urls, stock mentions, references punctuation and splits hashtags.
+
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    Returns
+    -------
+    series_changed: pandas.Series
+        A series with altered values."""
     series_changed = series.fillna("")
     series_changed = replace_emojis(series_changed)
     series_changed = split_hashtags(series_changed)
@@ -139,8 +353,30 @@ def text_cleaner(series: pd.Series)->pd.Series:
 
 
 def pipeline(series: pd.Series, 
-             to_clean:bool="True",
+             to_clean:bool=True,
              stopwords_list: Iterable[str]=STOPWORDS)->pd.Series:
+    """
+    Returns a series with fully cleaned tokens.
+
+    Replaces emojis, urls, stock mentions, references punctuation and splits hashtags if `to_clean`.
+    Then tokenizes series, removes stopwords from `stopwords_list` and lemmatizes tokens.
+
+    Parameters
+    ----------
+    series: pandas.Series
+        The series to be cleaned.
+
+    to_clean: bool, default=True
+        Whether to clean the data.
+
+    stopwords_list: Iterable[str], default=list(nltk.corpus.stopwords.words("English"))
+        An iterable of stopwords to remove.
+        
+    Returns
+    -------
+    series_changed: pandas.Series
+        A series with altered values.
+    """
     if to_clean:
         series_changed = text_cleaner(series)
     else:
