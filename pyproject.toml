@@ -29,26 +29,93 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-amd = [
-    "rocm>=7.14.0a20260611",
-    "rocm-sdk-core>=7.14.0a20260611",
-    "rocm-sdk-libraries-gfx110x-all>=7.14.0a20260611",
-    "torch<=2.13.0",
+amd-windows-gfx110X = [
+    "rocm",
+    "rocm-sdk-core",
+    "rocm-sdk-libraries-gfx110x-all",
+    "torch<2.13.0",
 ]
+amd-windows-gfx120X = [
+    "rocm",
+    "rocm-sdk-core",
+    "rocm-sdk-libraries-gfx120x-all",
+    "torch<2.13.0",
+]
+amd-linux = ["torch<2.13.0", "pytorch-triton-rocm", "triton-rocm"]
+cpu-mps = ["torch<2.13.0"]
+nvidia-cu12 = ["torch<2.13.0"]
+nvidia-cu13 = ["torch<2.13.0"]
 
 [dependency-groups]
 dev = ["ruff>=0.15.16"]
 
+[tool.uv]
+conflicts = [
+    [
+        { extra = "amd-windows-gfx110X" },
+        { extra = "amd-windows-gfx120X" },
+        { extra = "amd-linux" },
+        { extra = "cpu-mps" },
+        { extra = "nvidia-cu12" },
+        { extra = "nvidia-cu13" },
+    ],
+]
+
 [tool.uv.sources]
-torch = [{ index = "torch-amd", extra = "amd" }]
-rocm-sdk-core = [{ index = "torch-amd", extra = "amd" }]
-rocm-sdk-libraries-gfx110x-all = [{ index = "torch-amd", extra = "amd" }]
-rocm = [{ index = "torch-amd", extra = "amd" }]
+torch = [
+    { index = "torch-amd-windows-gfx110X", extra = "amd-windows-gfx110X" },
+    { index = "torch-amd-windows-gfx120X", extra = "amd-windows-gfx120X" },
+    { index = "torch-amd-linux", extra = "amd-linux" },
+    { index = "torch-cpu-mps", extra = "cpu-mps" },
+    { index = "torch-nvidia-cu12", extra = "nvidia-cu12" },
+    { index = "torch-nvidia-cu13", extra = "nvidia-cu13" },
+]
+triton-rocm = [{ index = "torch-amd-linux", extra = "amd-linux" }]
+pytorch-triton-rocm = [{ index = "torch-amd-linux", extra = "amd-linux" }]
+rocm-sdk-core = [
+    { index = "torch-amd-windows-gfx110X", extra = "amd-windows-gfx110X" },
+    { index = "torch-amd-windows-gfx120X", extra = "amd-windows-gfx120X" },
+]
+rocm-sdk-libraries-gfx110x-all = [
+    { index = "torch-amd-windows-gfx110X", extra = "amd-windows-gfx110X" },
+]
+rocm-sdk-libraries-gfx120x-all = [
+    { index = "torch-amd-windows-gfx120X", extra = "amd-windows-gfx120X" },
+]
+rocm = [
+    { index = "torch-amd-windows-gfx110X", extra = "amd-windows-gfx110X" },
+    { index = "torch-amd-windows-gfx120X", extra = "amd-windows-gfx120X" },
+]
 gensim = { git = "https://github.com/piskvorky/gensim" }
 
 [[tool.uv.index]]
-name = "torch-amd"
+name = "torch-amd-windows-gfx110X"
 url = "https://rocm.nightlies.amd.com/v2-staging/gfx110X-all"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-amd-windows-gfx120X"
+url = "https://rocm.nightlies.amd.com/v2-staging/gfx120X-all"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-amd-linux"
+url = "https://download.pytorch.org/whl/rocm7.2"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-cpu-mps"
+url = "https://pypi.org/simple"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-nvidia-cu12"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-nvidia-cu13"
+url = "https://download.pytorch.org/whl/cu132"
 explicit = true
 
 [tool.ruff]
