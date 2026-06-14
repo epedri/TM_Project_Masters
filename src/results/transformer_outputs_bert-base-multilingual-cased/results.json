@@ -1,27 +1,27 @@
 {
-  "accuracy": 0.15086432687270823,
-  "weighted_precision": 0.022760045122755358,
-  "weighted_recall": 0.15086432687270823,
-  "weighted_f1": 0.03955295961705959,
-  "macro_precision": 0.05028810895756941,
-  "macro_recall": 0.3333333333333333,
-  "macro_f1": 0.08739189804278562,
-  "classification_report": "              precision    recall  f1-score   support\n\n     Bearish     0.1509    1.0000    0.2622       288\n     Bullish     0.0000    0.0000    0.0000       385\n     Neutral     0.0000    0.0000    0.0000      1236\n\n    accuracy                         0.1509      1909\n   macro avg     0.0503    0.3333    0.0874      1909\nweighted avg     0.0228    0.1509    0.0396      1909\n",
+  "accuracy": 0.8376113148245155,
+  "weighted_precision": 0.8509657774555767,
+  "weighted_recall": 0.8376113148245155,
+  "weighted_f1": 0.8416651387835751,
+  "macro_precision": 0.771974240115833,
+  "macro_recall": 0.8161181860210985,
+  "macro_f1": 0.7908308885684452,
+  "classification_report": "              precision    recall  f1-score   support\n\n     Bearish     0.6667    0.7500    0.7059       288\n     Bullish     0.7121    0.8416    0.7714       385\n     Neutral     0.9372    0.8568    0.8952      1236\n\n    accuracy                         0.8376      1909\n   macro avg     0.7720    0.8161    0.7908      1909\nweighted avg     0.8510    0.8376    0.8417      1909\n",
   "confusion_matrix": [
     [
-      1.0,
-      0.0,
-      0.0
+      0.75,
+      0.1423611111111111,
+      0.1076388888888889
     ],
     [
-      1.0,
-      0.0,
-      0.0
+      0.05454545454545454,
+      0.8415584415584415,
+      0.1038961038961039
     ],
     [
-      1.0,
-      0.0,
-      0.0
+      0.0703883495145631,
+      0.07281553398058252,
+      0.8567961165048543
     ]
   ]
 }

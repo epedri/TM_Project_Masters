@@ -112,7 +112,9 @@ def replace_punctuations(series: pd.Series) -> pd.Series:
         )  # regex to remove these characters, encoding issues or old ASCII formating
 
         out_text = re.sub(
-            r"[–—−]", "-", out_text  # noqa: RUF001 intencional
+            r"[–—−]",  # noqa: RUF001 intencional
+            "-",
+            out_text,
         )  # regex to put every dash type to one single type
 
         out_text = re.sub(

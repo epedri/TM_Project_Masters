@@ -2,6 +2,7 @@ import json
 import os
 from typing import TYPE_CHECKING, TypedDict, cast
 
+import numpy as np
 import torch
 import tqdm
 from sklearn.metrics import (
@@ -10,6 +11,7 @@ from sklearn.metrics import (
     confusion_matrix,
     precision_recall_fscore_support,
 )
+from sklearn.utils.class_weight import compute_class_weight
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
 from transformers import (
@@ -20,9 +22,8 @@ from transformers import (
 )
 
 if TYPE_CHECKING:
-    import numpy as np
     import pandas as pd
-    from transformers import PreTrainedModel, TokenizersBackend
+    from transformers import PreTrainedModel, PreTrainedTokenizerBase
     from transformers.modeling_outputs import SequenceClassifierOutput
 
 logging.set_verbosity_error()  # only errors
@@ -84,7 +85,7 @@ class ModelTrainingResult(TypedDict):
     """
 
     model_name: str
-    tokenizer: TokenizersBackend
+    tokenizer: PreTrainedTokenizerBase
     model: PreTrainedModel
     history: list[dict[str, float]]
     final_validation_metrics: EvaluationMetricResult
@@ -111,7 +112,7 @@ class DataDataset(Dataset[dict[str, torch.Tensor]]):
         self,
         sentences: pd.Series,
         labels: pd.Series,
-        tokenizer: TokenizersBackend,
+        tokenizer: PreTrainedTokenizerBase,
         max_length: int,
     ) -> None:
         self.encodings = tokenizer(
@@ -205,6 +206,7 @@ def train_model(
     batch_size: int,
     lr: float,
     max_length: int,
+    seed: int = 42,
 ) -> ModelTrainingResult:
     """Train a transformer-based model for sequence classification.
 
@@ -232,6 +234,8 @@ def train_model(
     max_length : int
         The maximum length to which the tokenized sequences will be truncated or
         padded.
+    seed : int, optional
+        The random seed for reproducibility, by default 42.
 
     Returns
     -------
@@ -240,7 +244,9 @@ def train_model(
         model name, training history, final validation metrics, and the
         directory where the trained model is saved.
     """
-    tokenizer: TokenizersBackend = AutoTokenizer.from_pretrained(model_name)
+    tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
+        model_name
+    )
     model: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
         model_name, num_labels=num_labels
     )
@@ -253,9 +259,21 @@ def train_model(
         val_df["text"], val_df["label"], tokenizer, max_length=max_length
     )
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    rng = torch.Generator()
+    rng.manual_seed(seed)
+    train_loader = DataLoader(
+        train_ds, batch_size=batch_size, shuffle=True, generator=rng
+    )
     val_loader = DataLoader(val_ds, batch_size=batch_size)
 
+    weights = compute_class_weight(
+        class_weight="balanced",
+        classes=np.arange(num_labels),
+        y=train_df["label"].to_numpy(),
+    )
+    criterion = torch.nn.CrossEntropyLoss(
+        weight=torch.tensor(weights, dtype=torch.float32, device=device)
+    )
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
 
     history = []
@@ -273,8 +291,8 @@ def train_model(
             labels: torch.Tensor = inputs.pop("labels")
 
             optimizer.zero_grad()
-            outputs: SequenceClassifierOutput = model(**inputs, labels=labels)
-            loss: torch.Tensor = cast("torch.Tensor", outputs.loss)
+            outputs: SequenceClassifierOutput = model(**inputs)
+            loss: torch.Tensor = criterion(outputs.logits, labels)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
@@ -329,7 +347,7 @@ def train_model(
 def predict(
     sentences: list[str],
     model: PreTrainedModel,
-    tokenizer: TokenizersBackend,
+    tokenizer: PreTrainedTokenizerBase,
     max_length: int,
     device: torch.device,
 ) -> list[int]:
@@ -341,7 +359,7 @@ def predict(
         A list of input texts for which to predict labels.
     model : PreTrainedModel
         The trained transformer model to use for prediction.
-    tokenizer : TokenizersBackend
+    tokenizer : PreTrainedTokenizerBase
         The tokenizer instance used for preparing the data.
     max_length : int
         The maximum length to which the tokenized sequences will be truncated or
