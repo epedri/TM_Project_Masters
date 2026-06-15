@@ -1,0 +1,160 @@
+[project]
+name = "tm-project-masters"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "accelerate>=1.14.0",
+    "contractions>=0.1.73",
+    "datasets>=5.0.0",
+    "deep-translator>=1.11.4",
+    "emoji>=2.15.0",
+    "gensim",
+    "ipykernel>=7.3.0",
+    "ipywidgets>=8.1.8",
+    "lingua-language-detector>=2.2.0",
+    "matplotlib>=3.10.9",
+    "nltk>=3.9.4",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "polars>=1.41.2",
+    "protobuf>=7.35.1",
+    "scikit-learn>=1.9.0",
+    "seaborn>=0.13.2",
+    "sentencepiece>=0.2.1",
+    "transformers>=5.11.0",
+    "umap-learn>=0.5.12",
+    "wordcloud>=1.9.6",
+]
+
+[project.optional-dependencies]
+amd-windows-gfx110X = [
+    "rocm",
+    "rocm-sdk-core",
+    "rocm-sdk-libraries-gfx110x-all",
+    "torch<2.13.0",
+]
+amd-windows-gfx120X = [
+    "rocm",
+    "rocm-sdk-core",
+    "rocm-sdk-libraries-gfx120x-all",
+    "torch<2.13.0",
+]
+amd-linux = ["torch<2.13.0", "pytorch-triton-rocm", "triton-rocm"]
+cpu-mps = ["torch<2.13.0"]
+nvidia-cu12 = ["torch<2.13.0"]
+nvidia-cu13 = ["torch<2.13.0"]
+
+[dependency-groups]
+dev = ["ruff>=0.15.16"]
+
+[tool.uv]
+conflicts = [
+    [
+        { extra = "amd-windows-gfx110X" },
+        { extra = "amd-windows-gfx120X" },
+        { extra = "amd-linux" },
+        { extra = "cpu-mps" },
+        { extra = "nvidia-cu12" },
+        { extra = "nvidia-cu13" },
+    ],
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "torch-amd-windows-gfx110X", extra = "amd-windows-gfx110X" },
+    { index = "torch-amd-windows-gfx120X", extra = "amd-windows-gfx120X" },
+    { index = "torch-amd-linux", extra = "amd-linux" },
+    { index = "torch-cpu-mps", extra = "cpu-mps" },
+    { index = "torch-nvidia-cu12", extra = "nvidia-cu12" },
+    { index = "torch-nvidia-cu13", extra = "nvidia-cu13" },
+]
+triton-rocm = [{ index = "torch-amd-linux", extra = "amd-linux" }]
+pytorch-triton-rocm = [{ index = "torch-amd-linux", extra = "amd-linux" }]
+rocm-sdk-core = [
+    { index = "torch-amd-windows-gfx110X", extra = "amd-windows-gfx110X" },
+    { index = "torch-amd-windows-gfx120X", extra = "amd-windows-gfx120X" },
+]
+rocm-sdk-libraries-gfx110x-all = [
+    { index = "torch-amd-windows-gfx110X", extra = "amd-windows-gfx110X" },
+]
+rocm-sdk-libraries-gfx120x-all = [
+    { index = "torch-amd-windows-gfx120X", extra = "amd-windows-gfx120X" },
+]
+rocm = [
+    { index = "torch-amd-windows-gfx110X", extra = "amd-windows-gfx110X" },
+    { index = "torch-amd-windows-gfx120X", extra = "amd-windows-gfx120X" },
+]
+gensim = { git = "https://github.com/piskvorky/gensim" }
+
+[[tool.uv.index]]
+name = "torch-amd-windows-gfx110X"
+url = "https://rocm.nightlies.amd.com/v2-staging/gfx110X-all"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-amd-windows-gfx120X"
+url = "https://rocm.nightlies.amd.com/v2-staging/gfx120X-all"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-amd-linux"
+url = "https://download.pytorch.org/whl/rocm7.2"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-cpu-mps"
+url = "https://pypi.org/simple"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-nvidia-cu12"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[[tool.uv.index]]
+name = "torch-nvidia-cu13"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "CPY",
+    "FIX",
+    "COM812",
+    "D100",
+    "D104",
+    "E501",
+    'ERA001',
+    "S101",
+    "TD003",
+    "TD004",
+    "TRY003",
+    "T201",
+    "W505",
+    "PTH",
+    "EM101",
+    "PLR0913",
+    "PLR2004",
+    "TD002",
+]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 80
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
